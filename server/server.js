@@ -5,6 +5,8 @@ const ClientManager = require('./ClientManager')
 const ChatroomManager = require('./ChatroomManager')
 const makeHandlers = require('./handlers')
 
+const fetch = require("node-fetch");
+
 const clientManager = ClientManager()
 const chatroomManager = ChatroomManager()
 
@@ -20,6 +22,7 @@ io.on('connection', function (client) {
   } = makeHandlers(client, clientManager, chatroomManager)
 
   console.log('client connected...', client.id)
+
   clientManager.addClient(client)
 
   client.on('register', handleRegister)

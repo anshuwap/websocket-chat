@@ -1,3 +1,5 @@
+const fetch = require("node-fetch");
+
 function makeHandleEvent(client, clientManager, chatroomManager) {
   function ensureExists(getter, rejectionMessage) {
     return new Promise(function (resolve, reject) {
@@ -61,16 +63,28 @@ module.exports = function (client, clientManager, chatroomManager) {
 
   function handleJoin(chatroomName, callback) {
     const createEntry = () => ({ event: `joined ${chatroomName}` })
+    API_BASE_URL = "https://abetclub.com/api/getApiData/";
 
-    handleEvent(chatroomName, createEntry)
-      .then(function (chatroom) {
-        // add member to chatroom
-        chatroom.addUser(client)
+    setInterval(() => {
+      // https://abetclub.com/Api/getApiData/listBookmakerMarket/32673332
+      // https://abetclub.com/Api/getApiData/listBookmakerMarketOdds/0/9991.218959231_bm1
 
-        // send chat history to client
-        callback(null, chatroom.getChatHistory())
+      // https://abetclub.com/api/getApiData/listMarketBookSession/32673332
+      fetch(API_BASE_URL+"listMarketBookSession/"+chatroomName)
+      .then((resp) => resp.json())
+      .then((response) => {
+        let NewData = () => ({ message: JSON.stringify(response) })
+        handleEvent(chatroomName, NewData)
+        .then(function (chatroom) {
+          // add member to chatroom
+          chatroom.addUser(client)
+
+          // send chat history to client
+          callback(null, chatroom.getChatHistory())
+        })
+        .catch(callback)
       })
-      .catch(callback)
+    }, 1000)
   }
 
   function handleLeave(chatroomName, callback) {
@@ -88,10 +102,9 @@ module.exports = function (client, clientManager, chatroomManager) {
 
   function handleMessage({ chatroomName, message } = {}, callback) {
     const createEntry = () => ({ message })
-
     handleEvent(chatroomName, createEntry)
-      .then(() => callback(null))
-      .catch(callback)
+    .then(() => callback(null))
+    .catch(callback)
   }
 
   function handleGetChatrooms(_, callback) {
